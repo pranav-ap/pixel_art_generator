@@ -13,14 +13,14 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info(f"Using device: {device}")
 
-    logger.info(f"Preparing train_dl_len")
-    dm = SpriteDataModule()
-    dm.setup(stage='fit')
-    train_dl_len = len(dm.train_dataloader())
-    logger.info(f"Done Preparing train_dl_len")
+    # logger.info(f"Preparing train_dl_len")
+    # dm = SpriteDataModule()
+    # dm.setup(stage='fit')
+    # train_dl_len = len(dm.train_dataloader())
+    # logger.info(f"Done Preparing train_dl_len")
 
     dm = SpriteDataModule()
-    lightning_model = SpriteLightning(train_dl_len)
+    lightning_model = SpriteLightning()
 
     trainer = pl.Trainer(
         default_root_dir=config.dirs.output,
@@ -42,7 +42,6 @@ def main():
     if trainer.checkpoint_callback.best_model_path:
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
 
-    logger.info('Generating Samples')
     lightning_model.generate()
 
 

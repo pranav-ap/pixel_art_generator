@@ -29,8 +29,8 @@ class SpriteDataset(torch.utils.data.Dataset):
         image = self.images[idx]
         label = self.labels[idx]
 
-        # if self.transform:
-        #     image = self.transform(image)
+        if self.transform:
+            image = self.transform(image)
 
         return image, label
 
@@ -44,10 +44,10 @@ class SpriteDataModule(L.LightningDataModule):
         self.transform = T.Compose(
             [
                 T.ConvertImageDtype(torch.float),
-                # T.Normalize(
-                #     [0.485, 0.456, 0.406],
-                #     [0.229, 0.224, 0.225]
-                # ),
+                T.Normalize(
+                    [0.485, 0.456, 0.406],
+                    [0.229, 0.224, 0.225]
+                ),
             ]
         )
 

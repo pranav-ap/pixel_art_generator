@@ -16,8 +16,9 @@ class SpriteModel(nn.Module):
             in_channels=4,
             out_channels=3,
             layers_per_block=2,  # how many ResNet layers to use per UNet block
-            block_out_channels=(128, 256, 256, 512, 512),  # the number of output channels for each UNet block
+            block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
             down_block_types=(
+                "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
@@ -27,6 +28,7 @@ class SpriteModel(nn.Module):
             up_block_types=(
                 "UpBlock2D",
                 "AttnUpBlock2D",
+                "UpBlock2D",
                 "UpBlock2D",
                 "UpBlock2D",
                 "UpBlock2D",
