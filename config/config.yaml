@@ -1,8 +1,5 @@
 log_level: TRACE  # TRACE WARNING
 
-fast_dev_run: False
-overfit_batches: 2
-
 dirs:
     project_root: /home/stud/ath/ath_ws/others/pixel_art_generator
     data: ${dirs.project_root}/data
@@ -14,6 +11,9 @@ image_size: 16
 
 train:
     batch_size: 64 # 256
+
+    fast_dev_run: False
+    overfit_batches: 2
 
     seed: 42
     save_image_epochs: 2

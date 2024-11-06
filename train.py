@@ -13,12 +13,6 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info(f"Using device: {device}")
 
-    # logger.info(f"Preparing train_dl_len")
-    # dm = SpriteDataModule()
-    # dm.setup(stage='fit')
-    # train_dl_len = len(dm.train_dataloader())
-    # logger.info(f"Done Preparing train_dl_len")
-
     dm = SpriteDataModule()
     lightning_model = SpriteLightning()
 
@@ -33,8 +27,8 @@ def main():
         accumulate_grad_batches=config.train.accumulate_grad_batches,
         num_sanity_val_steps=config.train.num_sanity_val_steps,
         enable_model_summary=False,
-        fast_dev_run=config.fast_dev_run,
-        overfit_batches=config.overfit_batches,
+        fast_dev_run=config.train.fast_dev_run,
+        overfit_batches=config.train.overfit_batches,
     )
 
     trainer.fit(lightning_model, datamodule=dm)

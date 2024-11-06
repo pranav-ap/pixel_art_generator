@@ -59,12 +59,12 @@ class SpriteDataModule(L.LightningDataModule):
             filepath = f'{config.dirs.data}/sprites.npy'
             assert os.path.exists(filepath)
             images = np.load(filepath)
-            logger.debug(f'images.shape {images.shape}')
             images = images.reshape(-1, 3, 16, 16)
             
             filepath = f'{config.dirs.data}/sprites_labels.npy'
             assert os.path.exists(filepath)
             labels = np.load(filepath)
+            labels = labels.argmax(dim=1)
 
             from sklearn.model_selection import train_test_split
             train_images, val_images, train_labels, val_labels = train_test_split(
@@ -73,14 +73,14 @@ class SpriteDataModule(L.LightningDataModule):
 
             self.train_dataset = SpriteDataset(
                 images=torch.tensor(train_images),
-                labels=torch.tensor(train_labels),
+                labels=torch.tensor(train_labels, dtype=torch.int64),
                 subset="train",
                 transform=self.transform
             )
 
             self.val_dataset = SpriteDataset(
                 images=torch.tensor(val_images),
-                labels=torch.tensor(val_labels),
+                labels=torch.tensor(val_labels, dtype=torch.int64),
                 subset="validate",
                 transform=self.transform
             )
@@ -91,7 +91,7 @@ class SpriteDataModule(L.LightningDataModule):
     def train_dataloader(self):
         return torch.utils.data.DataLoader(
             self.train_dataset,
-            batch_size=config.train.train_batch_size,
+            batch_size=config.train.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,
@@ -101,7 +101,7 @@ class SpriteDataModule(L.LightningDataModule):
     def val_dataloader(self):
         return torch.utils.data.DataLoader(
             self.val_dataset,
-            batch_size=config.train.val_batch_size,
+            batch_size=config.train.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             persistent_workers=True,

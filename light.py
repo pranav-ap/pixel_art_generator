@@ -1,15 +1,11 @@
 from utils import logger, make_clear_directory
 from config import config
 import numpy as np
-import random
 import torch
 import torch.nn.functional as F
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint, TQDMProgressBar, LearningRateMonitor
-from diffusers import DDPMPipeline, DDPMScheduler
-from diffusers.utils import make_image_grid
-from diffusers.optimization import get_cosine_schedule_with_warmup
-from datetime import datetime
+from diffusers import DDPMScheduler
 
 torch.set_float32_matmul_precision('medium')
 
@@ -17,13 +13,8 @@ torch.set_float32_matmul_precision('medium')
 class SpriteLightning(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        # self.train_dl_len = train_dl_len
-
         from model import SpriteModel
         self.model = SpriteModel()
-
-        total_trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-        logger.info(f"Number of Trainable Parameters : {total_trainable_params}")
 
         self.noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
 
@@ -32,18 +23,12 @@ class SpriteLightning(pl.LightningModule):
         for dir_key in ['output', 'output_val_images', 'output_test_images']:
             make_clear_directory(getattr(config.dirs, dir_key))    
 
-    def forward(self, noisy_images, labels, timesteps):
-        x = self.model(noisy_images, labels, timesteps)
+    def forward(self, noisy_images, timesteps, labels):
+        x = self.model(noisy_images, timesteps, labels)
         return x
     
     def shared_step(self, batch):
         clean_images, labels = batch
-        
-        clean_images = clean_images.to(self.device)
-        labels = labels.to(self.device) 
-        print('----------')
-        print(labels.dtype)
-        labels = self.create_one_hot(labels=labels, num_labels=len(labels))
         
         noise = torch.randn(clean_images.shape, device=self.device)
         batch_size = clean_images.shape[0]
@@ -55,12 +40,13 @@ class SpriteLightning(pl.LightningModule):
             dtype=torch.int64,
             device=self.device
         )
-    
+
+        # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
     
         # Predict noise residual
-        noise_pred = self.model(noisy_images, labels.float(), timesteps)
-        loss = F.mse_loss(noise_pred, noise)
+        noise_residual_pred = self.model(noisy_images, labels, timesteps)
+        loss = F.mse_loss(noise_residual_pred, noise)
     
         return loss
 
@@ -75,77 +61,21 @@ class SpriteLightning(pl.LightningModule):
         self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
         return loss
 
-    # def on_epoch_end(self):
-    #     # if self.global_rank != 0:  # Only save from the main process
-    #     #     return
-    #     logger.info(f'self.current_epoch {self.current_epoch, config.train.save_image_epochs}')
-    #     if self.current_epoch % config.train.save_image_epochs == 0 or self.current_epoch == config.train.max_epochs - 1:
-    #         self._evaluate(self.current_epoch)
-        
-    def _evaluate(self, epoch):
-        self.model.eval() 
-    
-        clean_images = torch.randn(config.train.val_batch_size, 3, config.image_size, config.image_size) 
-        labels = torch.randint(0, 5, (config.train.val_batch_size,))
-        labels = self.create_one_hot(labels=labels, num_labels=config.train.val_batch_size)
-    
-        timesteps = torch.randint(
-            0,
-            self.noise_scheduler.config.num_train_timesteps,
-            (config.train.val_batch_size,),
-            dtype=torch.int64
-        )
-
-        noises = torch.randn_like(clean_images)
-        noisy_images = self.noise_scheduler.add_noise(clean_images, noises, timesteps)
-        
-        images = self.model.forward_clean(noisy_images, labels.float(), timesteps)
-        self.model.train()
-    
-        images_np = images.detach().cpu().numpy()
-        filepath = f"{config.dirs.output_val_images}/samples_{epoch:04d}.npy"
-        np.save(filepath, images_np)
-        filepath = f"{config.dirs.output_test_images}/labels_{epoch:04d}.npy"
-        np.save(filepath, labels)
-
-    @staticmethod
-    def create_one_hot(labels=None, num_labels=10, num_classes=5, randomize=False):
-        if randomize:
-            labels = [random.randint(0, num_classes - 1) for _ in range(num_labels)]
-        
-        one_hots = torch.zeros((len(labels), num_classes))
-        
-        for i, label in enumerate(labels):
-            one_hots[i][label] = 1
-
-        return one_hots
-
     def generate(self):
         self.model.eval() 
     
-        clean_images = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size) 
-        labels = self.create_one_hot(num_labels=config.test.batch_size, randomize=True)
-    
-        timesteps = torch.randint(
-            0,
-            self.noise_scheduler.config.num_train_timesteps,
-            (config.test.batch_size,),
-            dtype=torch.int64
-        )
-
+        clean_images = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size)
+        labels = torch.randint(0, 5, (config.test.batch_size,), dtype=torch.int64)
+        timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (config.test.batch_size,), dtype=torch.int64)
         noises = torch.randn_like(clean_images)
         noisy_images = self.noise_scheduler.add_noise(clean_images, noises, timesteps)
         
-        images = self.model.forward_clean(noisy_images, labels.float(), timesteps)
+        images = self.model.forward(noisy_images, labels, timesteps)
         self.model.train()
-    
+
         # Save the images
 
-        now = datetime.now()
-        date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-    
         images_np = images.detach().cpu().numpy()
-        # filepath = f"{config.dirs.output_test_images}/{date_time_str}.npy"
         filepath = f"{config.dirs.output_test_images}/samples.npy"
         np.save(filepath, images_np)
         filepath = f"{config.dirs.output_test_images}/labels.npy"
@@ -153,12 +83,6 @@ class SpriteLightning(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)
-
-        # lr_scheduler = get_cosine_schedule_with_warmup(
-        #     optimizer=optimizer,
-        #     num_warmup_steps=config.train.lr_warmup_steps,
-        #     num_training_steps=(self.train_dl_len * config.train.max_epochs),
-        # )
 
         lr_scheduler = {
             "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(
