@@ -1,0 +1,32 @@
+log_level: WARNING  # TRACE WARNING
+
+fast_dev_run: False
+overfit_batches: 0.0
+
+dirs:
+    data: D:/code/pixel_art_generator/data # /home/stud/ath/ath_ws/pixel_art_generator/data
+    output: /home/stud/ath/ath_ws/keypoint_matcher/output
+    output_test_images: ${dirs.output}/test_images
+    output_val_images: ${dirs.output}/val_images
+
+image_size: 16
+
+train:
+    train_batch_size: 4
+    val_batch_size: 4
+
+    seed: 42
+    save_image_epochs: 5
+    patience: 4
+
+    max_epochs: 20
+    check_val_every_n_epoch: 2
+    num_sanity_val_steps: 1
+    log_every_n_steps: 25
+    accumulate_grad_batches: 2
+    learning_rate: 1e-4
+    lr_warmup_steps: 500
+
+test:
+    batch_size: 4
+

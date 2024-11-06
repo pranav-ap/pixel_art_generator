@@ -1,0 +1,13 @@
+jupyterlab
+numpy
+pandas
+matplotlib
+seaborn
+tensorboard
+lightning
+scikit-learn
+scikit-image
+opencv-python
+diffusers[training]
+loguru
+hydra-core
