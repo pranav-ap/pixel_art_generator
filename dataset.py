@@ -59,7 +59,9 @@ class SpriteDataModule(L.LightningDataModule):
             filepath = f'{config.dirs.data}/sprites.npy'
             assert os.path.exists(filepath)
             images = np.load(filepath)
-
+            logger.debug(f'images.shape {images.shape}')
+            images = images.reshape(-1, 3, 16, 16)
+            
             filepath = f'{config.dirs.data}/sprites_labels.npy'
             assert os.path.exists(filepath)
             labels = np.load(filepath)

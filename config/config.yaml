@@ -1,19 +1,20 @@
-log_level: WARNING  # TRACE WARNING
+log_level: TRACE  # TRACE WARNING
 
 fast_dev_run: False
-overfit_batches: 0.0
+overfit_batches: 1
 
 dirs:
-    data: D:/code/pixel_art_generator/data # /home/stud/ath/ath_ws/pixel_art_generator/data
-    output: /home/stud/ath/ath_ws/keypoint_matcher/output
+    project_root: /home/stud/ath/ath_ws/others/pixel_art_generator
+    data: ${dirs.project_root}/data
+    output: ${dirs.project_root}/output
     output_test_images: ${dirs.output}/test_images
     output_val_images: ${dirs.output}/val_images
 
 image_size: 16
 
 train:
-    train_batch_size: 4
-    val_batch_size: 4
+    train_batch_size: 16 # 256
+    val_batch_size: 16
 
     seed: 42
     save_image_epochs: 5
@@ -28,5 +29,5 @@ train:
     lr_warmup_steps: 500
 
 test:
-    batch_size: 4
+    batch_size: 16
 
