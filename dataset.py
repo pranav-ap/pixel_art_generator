@@ -39,10 +39,13 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = os.cpu_count()
+        self.num_workers = 1 # os.cpu_count()
 
         self.transform = T.Compose(
-            [
+            [   
+                T.ToPILImage(), 
+                T.Resize((config.image_size, config.image_size)), 
+                T.ToTensor(),
                 T.ConvertImageDtype(torch.float),
                 T.Normalize(
                     [0.485, 0.456, 0.406],
@@ -64,7 +67,7 @@ class SpriteDataModule(L.LightningDataModule):
             filepath = f'{config.dirs.data}/sprites_labels.npy'
             assert os.path.exists(filepath)
             labels = np.load(filepath)
-            labels = labels.argmax(dim=1)
+            labels = labels.argmax(axis=1)
 
             from sklearn.model_selection import train_test_split
             train_images, val_images, train_labels, val_labels = train_test_split(
@@ -102,7 +105,7 @@ class SpriteDataModule(L.LightningDataModule):
         return torch.utils.data.DataLoader(
             self.val_dataset,
             batch_size=config.train.batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=self.num_workers,
             persistent_workers=True,
             pin_memory=True,

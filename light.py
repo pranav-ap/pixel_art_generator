@@ -45,7 +45,7 @@ class SpriteLightning(pl.LightningModule):
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
     
         # Predict noise residual
-        noise_residual_pred = self.model(noisy_images, labels, timesteps)
+        noise_residual_pred = self.model(noisy_images, timesteps, labels)
         loss = F.mse_loss(noise_residual_pred, noise)
     
         return loss
@@ -59,27 +59,29 @@ class SpriteLightning(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+
+        self.generate()
+        
         return loss
 
     def generate(self):
-        self.model.eval() 
-    
-        clean_images = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size)
-        labels = torch.randint(0, 5, (config.test.batch_size,), dtype=torch.int64)
-        timesteps = torch.randint(0, self.noise_scheduler.config.num_train_timesteps, (config.test.batch_size,), dtype=torch.int64)
-        noises = torch.randn_like(clean_images)
-        noisy_images = self.noise_scheduler.add_noise(clean_images, noises, timesteps)
+        noisy_images = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size, device=self.device)
+        labels = torch.randint(0, 5, (config.test.batch_size,), dtype=torch.int64, device=self.device)
+        timesteps = self.noise_scheduler.config.num_train_timesteps
         
-        images = self.model.forward(noisy_images, labels, timesteps)
-        self.model.train()
+        for t in range(timesteps):
+            t_tensor = torch.tensor([t], dtype=torch.int64, device=self.device)
+            noise_residual_pred = self.model(noisy_images, timesteps, labels).to(self.device)
+            noisy_images = self.noise_scheduler.step(noise_residual_pred, t_tensor, noisy_images).prev_sample.to(self.device)
 
         # Save the images
 
-        images_np = images.detach().cpu().numpy()
+        images = (noisy_images / 2 + 0.5).clamp(0, 1)
+        
         filepath = f"{config.dirs.output_test_images}/samples.npy"
-        np.save(filepath, images_np)
+        np.save(filepath, images.detach().cpu().numpy())
         filepath = f"{config.dirs.output_test_images}/labels.npy"
-        np.save(filepath, labels)
+        np.save(filepath, labels.detach().cpu().numpy())
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=config.train.learning_rate)

@@ -15,8 +15,10 @@ class SpriteModel(nn.Module):
             sample_size=config.image_size,  # the target image resolution
             in_channels=3,
             out_channels=3,
-            layers_per_block=2,  # how many ResNet layers to use per UNet block
-            block_out_channels=(128, 128, 256, 256, 512, 512),  # the number of output channels for each UNet block
+            # class_embed_type=None, #'identity',
+            # num_class_embeds=5,
+            layers_per_block=2,  
+            block_out_channels=(128, 128, 256, 256, 512, 512),  
             down_block_types=(
                 "DownBlock2D",
                 "DownBlock2D",
@@ -26,18 +28,19 @@ class SpriteModel(nn.Module):
                 "DownBlock2D",
             ),
             up_block_types=(
-                "UpBlock2D",
-                "AttnUpBlock2D",
-                "UpBlock2D",
-                "UpBlock2D",
+                "UpBlock2D",  
+                "AttnUpBlock2D", 
                 "UpBlock2D",
                 "UpBlock2D",
-            ),
+                "UpBlock2D",
+                "UpBlock2D",
+            ),            
         )
 
         total_trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         logger.info(f"Number of Trainable Parameters : {total_trainable_params}")
 
     def forward(self, noisy_images, timesteps, labels):
-        noise_residual_pred = self.model(noisy_images, timesteps, labels).sample
+        # noise_residual_pred = self.model(noisy_images, timesteps, labels).sample
+        noise_residual_pred = self.model(noisy_images, timesteps).sample
         return noise_residual_pred

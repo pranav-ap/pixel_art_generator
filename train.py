@@ -10,6 +10,8 @@ torch.set_float32_matmul_precision('medium')
 
 
 def main():
+    torch.cuda.empty_cache()
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info(f"Using device: {device}")
 
@@ -35,9 +37,7 @@ def main():
 
     if trainer.checkpoint_callback.best_model_path:
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
-
-    lightning_model.generate()
-
+    
 
 if __name__ == '__main__':
     main()

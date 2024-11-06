@@ -7,19 +7,19 @@ dirs:
     output_test_images: ${dirs.output}/test_images
     output_val_images: ${dirs.output}/val_images
 
-image_size: 16
+image_size: 32 # 16
 
 train:
-    batch_size: 64 # 256
+    batch_size: 64
 
     fast_dev_run: False
-    overfit_batches: 2
+    overfit_batches: 1
 
     seed: 42
     save_image_epochs: 2
     patience: 4
 
-    max_epochs: 20
+    max_epochs: 5
     check_val_every_n_epoch: 2
     num_sanity_val_steps: 1
     log_every_n_steps: 25
@@ -28,5 +28,5 @@ train:
     lr_warmup_steps: 500
 
 test:
-    batch_size: 16
+    batch_size: 2
 
