@@ -1,32 +1,31 @@
-log_level: TRACE  # TRACE WARNING
+log_level: TRACE # TRACE WARNING
 
 dirs:
-    project_root: /home/stud/ath/ath_ws/others/pixel_art_generator
-    data: ${dirs.project_root}/data
-    output: ${dirs.project_root}/output
-    output_test_images: ${dirs.output}/test_images
-    output_val_images: ${dirs.output}/val_images
+  project_root: D:/code/pixel_art_generator
+  data: ${dirs.project_root}/data
+  output: ${dirs.project_root}/output
+  output_test_images: ${dirs.output}/test_images
+  output_val_images: ${dirs.output}/val_images
 
-image_size: 16 # 16 32
+image_size: 128 # 16 32
 
 train:
-    batch_size: 2
+  batch_size: 8
 
-    fast_dev_run: False
-    overfit_batches: 1
+  fast_dev_run: False
+  overfit_batches: 1
 
-    seed: 42
-    save_image_epochs: 2
-    patience: 4
+  seed: 42
+  save_image_epochs: 2
+  patience: 4
 
-    max_epochs: 5
-    check_val_every_n_epoch: 1
-    num_sanity_val_steps: 1
-    log_every_n_steps: 25
-    accumulate_grad_batches: 2
-    learning_rate: 1e-3
-    lr_warmup_steps: 500
+  max_epochs: 5
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 1
+  log_every_n_steps: 25
+  accumulate_grad_batches: 2
+  learning_rate: 1e-3
+  lr_warmup_steps: 500
 
 test:
-    batch_size: 2
-
+  batch_size: 8

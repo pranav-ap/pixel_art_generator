@@ -39,18 +39,13 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = 3 # os.cpu_count()
+        self.num_workers = 3 # 1 3 os.cpu_count()
 
         self.transform = T.Compose(
-            [   
-                # T.ToPILImage(), 
-                # T.Resize((config.image_size, config.image_size)), 
-                # T.ToTensor(),
-                # T.ConvertImageDtype(torch.float),
-                T.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225]
-                ),
+            [
+                T.ToPILImage(), 
+                T.Resize((config.image_size, config.image_size)), 
+                T.ToTensor(),
             ]
         )
 
@@ -60,16 +55,26 @@ class SpriteDataModule(L.LightningDataModule):
     def setup(self, stage=None):
         if stage == "fit" or stage == "validate":
             filepath = f'{config.dirs.data}/sprites.npy'
-            assert os.path.exists(filepath)
+            logger.info('Loading Sprites')
+            assert os.path.exists(filepath), f'{filepath} not found'
             images = np.load(filepath)
             images = images.reshape(-1, 3, 16, 16)
-            images = images[:50]
+            # Constrain between 0 and 1
+            images = images / 255.
             
             filepath = f'{config.dirs.data}/sprites_labels.npy'
-            assert os.path.exists(filepath)
+            logger.info('Loading Sprite Labels')
+            assert os.path.exists(filepath), f'{filepath} not found'
             labels = np.load(filepath)
+            # Convert one-hot to number
             labels = labels.argmax(axis=1)
-            labels = labels[:50]
+
+            # Choose N samples
+            N = 1000 
+            batch_size = images.shape[0]
+            indices = torch.randperm(batch_size)[:N]
+            images = images[indices]
+            labels = labels[indices]
 
             from sklearn.model_selection import train_test_split
             train_images, val_images, train_labels, val_labels = train_test_split(
@@ -77,17 +82,15 @@ class SpriteDataModule(L.LightningDataModule):
             )
 
             self.train_dataset = SpriteDataset(
-                images=torch.tensor(train_images),
-                labels=torch.tensor(train_labels, dtype=torch.int64),
+                images=torch.tensor(train_images, dtype=torch.float32),
+                labels=torch.tensor(train_labels, dtype=torch.int32),
                 subset="train",
-                transform=self.transform
             )
 
             self.val_dataset = SpriteDataset(
-                images=torch.tensor(val_images),
-                labels=torch.tensor(val_labels, dtype=torch.int64),
+                images=torch.tensor(val_images, dtype=torch.float32),
+                labels=torch.tensor(val_labels, dtype=torch.int32),
                 subset="validate",
-                transform=self.transform
             )
 
             logger.info(f"Train Dataset       : {len(self.train_dataset)} samples")

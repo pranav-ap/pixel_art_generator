@@ -15,13 +15,10 @@ class SpriteModel(nn.Module):
             sample_size=config.image_size, 
             in_channels=3,
             out_channels=3,
-            # class_embed_type=None, #'identity',
-            # num_class_embeds=5,
+            num_class_embeds=5,
             layers_per_block=2,  
-            block_out_channels=(128, 128, 256, 256, 512, 512),  
+            block_out_channels=(64, 128, 128, 256), 
             down_block_types=(
-                "DownBlock2D",
-                "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
                 "AttnDownBlock2D",
@@ -32,8 +29,6 @@ class SpriteModel(nn.Module):
                 "AttnUpBlock2D", 
                 "UpBlock2D",
                 "UpBlock2D",
-                "UpBlock2D",
-                "UpBlock2D",
             ),            
         )
 
@@ -41,6 +36,5 @@ class SpriteModel(nn.Module):
         logger.info(f"Number of Trainable Parameters : {total_trainable_params}")
 
     def forward(self, noisy_images, timesteps, labels):
-        # noise_residual_pred = self.model(noisy_images, timesteps, labels).sample
-        noise_residual_pred = self.model(noisy_images, timesteps).sample
+        noise_residual_pred = self.model(noisy_images, timesteps, labels).sample
         return noise_residual_pred

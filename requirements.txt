@@ -3,11 +3,10 @@ numpy
 pandas
 matplotlib
 seaborn
-tensorboard
 lightning
 scikit-learn
 scikit-image
 opencv-python
-diffusers[training]
+diffusers
 loguru
 hydra-core
