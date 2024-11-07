@@ -12,7 +12,7 @@ class SpriteModel(nn.Module):
         super().__init__()
 
         self.model = UNet2DModel(
-            sample_size=config.image_size,  # the target image resolution
+            sample_size=config.image_size, 
             in_channels=3,
             out_channels=3,
             # class_embed_type=None, #'identity',

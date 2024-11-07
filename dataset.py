@@ -39,18 +39,18 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = 1 # os.cpu_count()
+        self.num_workers = 3 # os.cpu_count()
 
         self.transform = T.Compose(
             [   
-                T.ToPILImage(), 
-                T.Resize((config.image_size, config.image_size)), 
-                T.ToTensor(),
-                T.ConvertImageDtype(torch.float),
-                T.Normalize(
-                    [0.485, 0.456, 0.406],
-                    [0.229, 0.224, 0.225]
-                ),
+                # T.ToPILImage(), 
+                # T.Resize((config.image_size, config.image_size)), 
+                # T.ToTensor(),
+                # T.ConvertImageDtype(torch.float),
+                # T.Normalize(
+                #     [0.485, 0.456, 0.406],
+                #     [0.229, 0.224, 0.225]
+                # ),
             ]
         )
 
@@ -63,11 +63,13 @@ class SpriteDataModule(L.LightningDataModule):
             assert os.path.exists(filepath)
             images = np.load(filepath)
             images = images.reshape(-1, 3, 16, 16)
+            images = images[:50]
             
             filepath = f'{config.dirs.data}/sprites_labels.npy'
             assert os.path.exists(filepath)
             labels = np.load(filepath)
             labels = labels.argmax(axis=1)
+            labels = labels[:50]
 
             from sklearn.model_selection import train_test_split
             train_images, val_images, train_labels, val_labels = train_test_split(

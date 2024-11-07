@@ -32,14 +32,8 @@ class SpriteLightning(pl.LightningModule):
         
         noise = torch.randn(clean_images.shape, device=self.device)
         batch_size = clean_images.shape[0]
-    
-        timesteps = torch.randint(
-            0,
-            self.noise_scheduler.config.num_train_timesteps,
-            (batch_size,),
-            dtype=torch.int64,
-            device=self.device
-        )
+        timesteps_count = self.noise_scheduler.config.num_train_timesteps
+        timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
 
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
@@ -76,8 +70,8 @@ class SpriteLightning(pl.LightningModule):
 
         # Save the images
 
-        images = (noisy_images / 2 + 0.5).clamp(0, 1)
-        
+        # images = (noisy_images / 2 + 0.5).clamp(0, 1)
+        images = ((noisy_images / 2 + 0.5) * 255).clamp(0, 255).to(torch.uint8)
         filepath = f"{config.dirs.output_test_images}/samples.npy"
         np.save(filepath, images.detach().cpu().numpy())
         filepath = f"{config.dirs.output_test_images}/labels.npy"
