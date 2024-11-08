@@ -16,7 +16,7 @@ def main():
     logger.info(f"Using device: {device}")
 
     dm = SpriteDataModule()
-    lightning_model = SpriteLightning()
+    light = SpriteLightning()
 
     trainer = pl.Trainer(
         default_root_dir=config.dirs.output,
@@ -33,11 +33,19 @@ def main():
         overfit_batches=config.train.overfit_batches,
     )
 
-    trainer.fit(lightning_model, datamodule=dm)
+    trainer.fit(
+        light,
+        datamodule=dm,
+        ckpt_path='./output/checkpoints/best-checkpoint-v1.ckpt'
+    )
 
     if trainer.checkpoint_callback.best_model_path:
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
-    
+
+    # checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint.ckpt'
+    # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
+    light.generate()
+
 
 if __name__ == '__main__':
     main()

@@ -39,7 +39,7 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = 3 # 1 3 os.cpu_count()
+        self.num_workers = 3  # 1 3 os.cpu_count()
 
         self.transform = T.Compose(
             [
@@ -70,7 +70,7 @@ class SpriteDataModule(L.LightningDataModule):
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 1000 
+            N = 10_000
             batch_size = images.shape[0]
             indices = torch.randperm(batch_size)[:N]
             images = images[indices]

@@ -17,16 +17,18 @@ class SpriteModel(nn.Module):
             out_channels=3,
             num_class_embeds=5,
             layers_per_block=2,  
-            block_out_channels=(64, 128, 128, 256), 
+            block_out_channels=(128, 128, 256, 256, 512),
             down_block_types=(
+                "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
                 "AttnDownBlock2D",
                 "DownBlock2D",
             ),
             up_block_types=(
-                "UpBlock2D",  
-                "AttnUpBlock2D", 
+                "UpBlock2D",
+                "AttnUpBlock2D",
+                "UpBlock2D",
                 "UpBlock2D",
                 "UpBlock2D",
             ),            
@@ -37,4 +39,5 @@ class SpriteModel(nn.Module):
 
     def forward(self, noisy_images, timesteps, labels):
         noise_residual_pred = self.model(noisy_images, timesteps, labels).sample
+        # noise_residual_pred = self.model(noisy_images, timesteps).sample
         return noise_residual_pred
