@@ -38,15 +38,9 @@ class SpriteLightning(pl.LightningModule):
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
     
-        # Predict noise residual
-        
-        # logger.debug(f'noisy_images.shape {noisy_images.shape}')
-        # logger.debug(f'timesteps {timesteps[:4]}')
-        # logger.debug(f'labels {labels[:4]}')
+        noise_pred = self.model(noisy_images, timesteps, labels)
+        loss = F.mse_loss(noise_pred, noise)
 
-        noise_residual_pred = self.model(noisy_images, timesteps, labels)
-        loss = F.mse_loss(noise_residual_pred, noise)
-    
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -62,7 +56,7 @@ class SpriteLightning(pl.LightningModule):
 
     def checkout(self, batch):
         clean_images, labels = batch
-        
+
         noise = torch.randn(clean_images.shape, device=self.device)
         batch_size = clean_images.shape[0]
         timesteps_count = self.noise_scheduler.config.num_train_timesteps
@@ -70,28 +64,29 @@ class SpriteLightning(pl.LightningModule):
 
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
-    
-        # Predict noise residual
-        
+
+        # Predict noise
+
         # logger.debug(f'noisy_images.shape {noisy_images.shape}')
         # logger.debug(f'timesteps {timesteps[:4]}')
         # logger.debug(f'labels {labels[:4]}')
 
         noise_pred = self.model(noisy_images, timesteps, labels)
-        
+
         return noise_pred
 
     def generate(self):
-        noisy_images = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size, device=self.device)
+        noises = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size, device=self.device)
         labels = torch.randint(0, 5, (config.test.batch_size,), dtype=torch.int64, device=self.device)
         timesteps = self.noise_scheduler.config.num_train_timesteps
-        
+
+        # Get images from noise
         for t in range(timesteps):
-            t_tensor = torch.tensor([t], dtype=torch.int64, device=self.device)
-            noise_residual_pred = self.model(noisy_images, timesteps, labels).to(self.device)
-            noisy_images = self.noise_scheduler.step(noise_residual_pred, t_tensor, noisy_images).prev_sample.to(self.device)
-        
-        return noisy_images
+            t = torch.tensor([t], dtype=torch.int64, device=self.device)
+            noise_pred = self.model(noises, timesteps, labels).to(self.device)
+            noises = self.noise_scheduler.step(noise_pred, t, noises).prev_sample.to(self.device)
+
+        return noises
 
         # Save the images
 
