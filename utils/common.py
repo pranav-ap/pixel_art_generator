@@ -1,9 +1,6 @@
 import os
-import zipfile
 import shutil
 import torch
-from PIL import Image
-from itertools import islice
 
 
 def get_best_device(verbose=False):

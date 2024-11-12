@@ -1,12 +1,14 @@
-from utils import logger, make_clear_directory
-from config import config
+import lightning.pytorch as pl
 import numpy as np
 import torch
 import torch.nn.functional as F
-import lightning.pytorch as pl
-from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint, TQDMProgressBar, LearningRateMonitor
-from diffusers import DDPMScheduler, DDIMScheduler
+from diffusers import DDIMScheduler, DDPMScheduler
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
 from tqdm import tqdm
+
+from config import config
+from utils import make_clear_directory, visualize_X_samples_grid
+from .model import SpriteModel
 
 torch.set_float32_matmul_precision('medium')
 
@@ -14,15 +16,14 @@ torch.set_float32_matmul_precision('medium')
 class SpriteLightning(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        from model import SpriteModel
         self.model = SpriteModel()
 
         self.noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
 
-        # for dir_key in ['output_val_images', 'output_test_images']:
-        #     make_clear_directory(getattr(config.dirs, dir_key))
+        for dir_key in ['output_val_images', 'output_test_images']:
+            make_clear_directory(getattr(config.dirs, dir_key))
 
     def forward(self, noisy_images, timesteps, labels):
         x = self.model(noisy_images, timesteps, labels)
@@ -30,15 +31,16 @@ class SpriteLightning(pl.LightningModule):
 
     def shared_step(self, batch):
         clean_images, labels = batch
-        
-        noise = torch.randn(clean_images.shape, device=self.device)
+        clean_images = clean_images * 2 - 1  # mapped to (-1, 1)
+
+        noise = torch.randn_like(clean_images, device=self.device)
         batch_size = clean_images.shape[0]
-        timesteps_count = self.noise_scheduler.config.num_train_timesteps
+        timesteps_count = self.noise_scheduler.config.num_train_timesteps - 1
         timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
 
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
-    
+
         noise_pred = self.model(noisy_images, timesteps, labels)
         loss = F.mse_loss(noise_pred, noise)
 
@@ -53,50 +55,62 @@ class SpriteLightning(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
+        self.generate()
         return loss
 
-    def checkout(self, batch):
+    @torch.no_grad()
+    def checkout_forward_pass(self, batch):
         clean_images, labels = batch
+        clean_images = clean_images * 2 - 1  # mapped to (-1, 1)
 
-        noise = torch.randn(clean_images.shape, device=self.device)
+        noise = torch.randn_like(clean_images, device=self.device)
         batch_size = clean_images.shape[0]
-        timesteps_count = self.noise_scheduler.config.num_train_timesteps
+        timesteps_count = self.noise_scheduler.config.num_train_timesteps - 1
         timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
 
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
 
-        # Predict noise
-
-        # logger.debug(f'noisy_images.shape {noisy_images.shape}')
-        # logger.debug(f'timesteps {timesteps[:4]}')
-        # logger.debug(f'labels {labels[:4]}')
-
         noise_pred = self.model(noisy_images, timesteps, labels)
 
         return noise_pred
 
+    @torch.no_grad()
     def generate(self):
-        logger.info('Generating Sample Images')
-        samples = torch.randn(config.test.batch_size, 3, config.image_size, config.image_size, device=self.device)
-        labels = torch.randint(0, 5, (config.test.batch_size,), dtype=torch.int64, device=self.device)
+        num_classes = 5
+        num_member_per_class = config.test.batch_size
+        samples = torch.randn(num_member_per_class * num_classes, 3, config.image_size, config.image_size, device=self.device)
+        labels = torch.tensor([[i] * num_member_per_class for i in range(num_classes)], dtype=torch.int64).flatten().to(self.device)
 
-        timesteps = 500
-        self.noise_scheduler.set_timesteps(timesteps, device=self.device)
+        # self.noise_scheduler.set_timesteps(num_inference_steps=200, device=self.device)
 
-        for t in tqdm(range(timesteps - 1, -1, -1), desc="Generating images from noise"):
-            noise_pred = self.model(samples, timesteps, labels).to(self.device)
-            samples = self.noise_scheduler.step(noise_pred, t, samples).prev_sample.to(self.device)
+        pred_original_sample = None
 
-        # Normalize to [0, 1]
-        min_val = samples.min()
-        max_val = samples.max()
-        samples = (samples - min_val) / (max_val - min_val)
+        for i, t in tqdm(enumerate(self.noise_scheduler.timesteps), desc="Generating images from noise"):
+            with torch.no_grad():
+                noise_pred = self.model(samples, t, labels).to(self.device)
 
-        filepath = f"{config.dirs.output_test_images}/samples.npy"
-        np.save(filepath, samples.detach().cpu().numpy())
-        filepath = f"{config.dirs.output_test_images}/labels.npy"
+            x = self.noise_scheduler.step(noise_pred, t, samples)
+            samples = x.prev_sample.to(self.device)
+            pred_original_sample = x.pred_original_sample .to(self.device)
+
+        samples = (samples + 1) / 2
+        samples = samples.detach().cpu().clip(-1, 1)
+
+        filepath = f"{config.dirs.output_test_images}/samples_{self.current_epoch}.npy"
+        np.save(filepath, samples.numpy())
+        filepath = f"{config.dirs.output_test_images}/labels_{self.current_epoch}.npy"
         np.save(filepath, labels.detach().cpu().numpy())
+        filepath = f"{config.dirs.output_test_images}/pred_original_sample{self.current_epoch}.npy"
+        np.save(filepath, pred_original_sample.detach().cpu().numpy())
+
+        visualize_X_samples_grid(
+            samples,
+            labels,
+            n_samples=num_member_per_class * num_classes,
+            n_cols=num_member_per_class,
+            filepath=f'{config.dirs.output_test_images}/samples_{self.current_epoch}.png'
+        )
 
         return samples, labels
 

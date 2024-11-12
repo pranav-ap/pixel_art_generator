@@ -3,8 +3,7 @@ from utils import logger
 import torch
 import lightning as L
 import lightning.pytorch as pl
-from light import SpriteLightning
-from dataset import SpriteDataModule
+from src import SpriteLightning, SpriteDataModule
 
 torch.set_float32_matmul_precision('medium')
 
@@ -36,16 +35,18 @@ def main():
     trainer.fit(
         light,
         datamodule=dm,
-        ckpt_path='./output/checkpoints/best-checkpoint-v1.ckpt'
     )
 
     if trainer.checkpoint_callback.best_model_path:
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
 
-    # checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint.ckpt'
-    # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
+
+def generate():
+    checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint-v1.ckpt'
+    light = SpriteLightning.load_from_checkpoint(checkpoint_path)
     light.generate()
 
 
 if __name__ == '__main__':
+    # generate()
     main()

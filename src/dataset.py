@@ -1,12 +1,13 @@
-from utils import logger
-from config import config
 import os
-import torch
-import numpy as np
-import lightning as L
 from typing import Optional
+
+import lightning as L
+import numpy as np
+import torch
 from torchvision import transforms as T
 
+from config import config
+from utils import logger
 
 torch.set_float32_matmul_precision('medium')
 
@@ -39,12 +40,12 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = 3  # 1 3 os.cpu_count()
+        self.num_workers = os.cpu_count()  # 1 3 os.cpu_count()
 
         self.transform = T.Compose(
             [
-                T.ToPILImage(), 
-                T.Resize((config.image_size, config.image_size)), 
+                T.ToPILImage(),
+                T.Resize((config.image_size, config.image_size)),
                 T.ToTensor(),
             ]
         )
@@ -61,7 +62,7 @@ class SpriteDataModule(L.LightningDataModule):
             images = images.reshape(-1, 3, 16, 16)
             # Constrain between 0 and 1
             images = images / 255.
-            
+
             filepath = f'{config.dirs.data}/sprites_labels.npy'
             logger.info('Loading Sprite Labels')
             assert os.path.exists(filepath), f'{filepath} not found'
@@ -70,7 +71,7 @@ class SpriteDataModule(L.LightningDataModule):
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 10_000
+            N = 1_00
             batch_size = images.shape[0]
             indices = torch.randperm(batch_size)[:N]
             images = images[indices]

@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def visualize_X_samples_grid(images, labels, n_samples=12, n_cols=4):
+def visualize_X_samples_grid(images, labels, n_samples=12, n_cols=4, filepath=None):
     images_vis = images.reshape(-1, 16, 16, 3)
     if isinstance(images, torch.Tensor):
         images_vis = images_vis.detach().cpu().numpy()
@@ -28,4 +28,8 @@ def visualize_X_samples_grid(images, labels, n_samples=12, n_cols=4):
         ax.set_title(f"Label: {label}")
 
     plt.tight_layout()
-    plt.show()
+
+    if filepath is not None:
+        plt.savefig(filepath)
+    else:
+        plt.show()
