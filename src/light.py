@@ -17,8 +17,7 @@ class SpriteLightning(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.model = SpriteModel()
-
-        self.noise_scheduler = DDPMScheduler(num_train_timesteps=1000)
+        self.noise_scheduler = DDIMScheduler(num_train_timesteps=500)
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
 
@@ -82,7 +81,7 @@ class SpriteLightning(pl.LightningModule):
         samples = torch.randn(num_member_per_class * num_classes, 3, config.image_size, config.image_size, device=self.device)
         labels = torch.tensor([[i] * num_member_per_class for i in range(num_classes)], dtype=torch.int64).flatten().to(self.device)
 
-        # self.noise_scheduler.set_timesteps(num_inference_steps=200, device=self.device)
+        self.noise_scheduler.set_timesteps(num_inference_steps=50, device=self.device)
 
         pred_original_sample = None
 
@@ -92,17 +91,20 @@ class SpriteLightning(pl.LightningModule):
 
             x = self.noise_scheduler.step(noise_pred, t, samples)
             samples = x.prev_sample.to(self.device)
-            pred_original_sample = x.pred_original_sample .to(self.device)
+            pred_original_sample = x.pred_original_sample.to(self.device)
 
         samples = (samples + 1) / 2
         samples = samples.detach().cpu().clip(-1, 1)
-
         filepath = f"{config.dirs.output_test_images}/samples_{self.current_epoch}.npy"
         np.save(filepath, samples.numpy())
+
         filepath = f"{config.dirs.output_test_images}/labels_{self.current_epoch}.npy"
         np.save(filepath, labels.detach().cpu().numpy())
-        filepath = f"{config.dirs.output_test_images}/pred_original_sample{self.current_epoch}.npy"
-        np.save(filepath, pred_original_sample.detach().cpu().numpy())
+
+        pred_original_sample = (pred_original_sample + 1) / 2
+        pred_original_sample = pred_original_sample.detach().cpu().clip(-1, 1)
+        filepath = f"{config.dirs.output_test_images}/pred_original_sample_{self.current_epoch}.npy"
+        np.save(filepath, pred_original_sample.numpy())
 
         visualize_X_samples_grid(
             samples,
@@ -110,6 +112,14 @@ class SpriteLightning(pl.LightningModule):
             n_samples=num_member_per_class * num_classes,
             n_cols=num_member_per_class,
             filepath=f'{config.dirs.output_test_images}/samples_{self.current_epoch}.png'
+        )
+
+        visualize_X_samples_grid(
+            pred_original_sample,
+            labels,
+            n_samples=num_member_per_class * num_classes,
+            n_cols=num_member_per_class,
+            filepath=f'{config.dirs.output_test_images}/pred_original_sample_{self.current_epoch}.png'
         )
 
         return samples, labels

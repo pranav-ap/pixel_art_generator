@@ -33,3 +33,5 @@ def visualize_X_samples_grid(images, labels, n_samples=12, n_cols=4, filepath=No
         plt.savefig(filepath)
     else:
         plt.show()
+
+    plt.close()

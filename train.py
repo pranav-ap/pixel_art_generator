@@ -17,6 +17,9 @@ def main():
     dm = SpriteDataModule()
     light = SpriteLightning()
 
+    # checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint.ckpt'
+    # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
+
     trainer = pl.Trainer(
         default_root_dir=config.dirs.output,
         logger=L.pytorch.loggers.CSVLogger(save_dir=config.dirs.output),

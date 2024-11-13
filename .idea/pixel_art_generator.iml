@@ -5,8 +5,10 @@
       <excludeFolder url="file://$MODULE_DIR$/data" />
       <excludeFolder url="file://$MODULE_DIR$/output" />
       <excludeFolder url="file://$MODULE_DIR$/.ipynb_checkpoints" />
+      <excludeFolder url="file://$MODULE_DIR$/output/test_images" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <content url="file://$MODULE_DIR$/output/test_images" />
+    <orderEntry type="jdk" jdkName="common_env" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

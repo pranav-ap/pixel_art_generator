@@ -71,16 +71,30 @@ class SpriteDataModule(L.LightningDataModule):
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 1_00
+            N = 2_000
             batch_size = images.shape[0]
             indices = torch.randperm(batch_size)[:N]
             images = images[indices]
             labels = labels[indices]
 
-            from sklearn.model_selection import train_test_split
-            train_images, val_images, train_labels, val_labels = train_test_split(
-                images, labels, test_size=0.2, random_state=42, shuffle=True
-            )
+            from sklearn.model_selection import StratifiedShuffleSplit
+            stratified_split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=config.train.seed)
+            train_idx, val_idx = next(iter(stratified_split.split(images, labels)))
+            train_images, val_images = images[train_idx], images[val_idx]
+            train_labels, val_labels = labels[train_idx], labels[val_idx]
+
+            # Check unique labels and count of each class in each set
+            unique_train_labels, train_counts = np.unique(train_labels, return_counts=True)
+            unique_val_labels, val_counts = np.unique(val_labels, return_counts=True)
+
+            logger.info(f'Unique labels in training set: {unique_train_labels}')
+            logger.info(f'Counts of each class in training set: {dict(zip(unique_train_labels, train_counts))}')
+
+            logger.info(f'Unique labels in validation set: {unique_val_labels}')
+            logger.info(f'Counts of each class in validation set: {dict(zip(unique_val_labels, val_counts))}')
+
+            assert len(unique_train_labels) == 5, "Training set does not contain all 5 classes"
+            assert len(unique_val_labels) == 5, "Validation set does not contain all 5 classes"
 
             self.train_dataset = SpriteDataset(
                 images=torch.tensor(train_images, dtype=torch.float32),
