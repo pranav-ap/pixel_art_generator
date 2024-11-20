@@ -1,11 +1,18 @@
 import torch
-import numpy as np
 import matplotlib.pyplot as plt
 
 
+def denormalize(tensor, mean, std):
+    mean = torch.tensor(mean).view(3, 1, 1)
+    std = torch.tensor(std).view(3, 1, 1)
+    return tensor * std + mean
+
+
 def visualize_X_samples_grid(images, labels, n_samples=12, n_cols=4, filepath=None):
-    images_vis = images.reshape(-1, 16, 16, 3)
-    if isinstance(images, torch.Tensor):
+    images_vis = denormalize(images, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    images_vis = images_vis.reshape(-1, 16, 16, 3)
+
+    if isinstance(images_vis, torch.Tensor):
         images_vis = images_vis.detach().cpu().numpy()
 
     if isinstance(labels, torch.Tensor):

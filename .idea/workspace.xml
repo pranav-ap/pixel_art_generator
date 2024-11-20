@@ -5,31 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ac70900-1ac8-4314-8803-d8a061d35ca0" name="Changes" comment="refactor">
-      <change afterPath="$PROJECT_DIR$/notebooks/class_tutorial.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/t10k-images-idx3-ubyte" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/t10k-images-idx3-ubyte.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/t10k-labels-idx1-ubyte" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/t10k-labels-idx1-ubyte.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/train-images-idx3-ubyte" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/train-images-idx3-ubyte.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/train-labels-idx1-ubyte" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/mnist/MNIST/raw/train-labels-idx1-ubyte.gz" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/my_pipeline/model_index.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/my_pipeline/scheduler/scheduler_config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/my_pipeline/unet/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/my_pipeline/unet/diffusion_pytorch_model.safetensors" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notebooks/tutorial.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/pixel_art_generator.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pixel_art_generator.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config/config.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/eda.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/eda.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/results.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/eda.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/environment.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/light.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/light.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/visualize.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/visualize.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -74,8 +55,8 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\code\pixel_art_generator" />
       <recent name="D:\code\pixel_art_generator\notebooks" />
+      <recent name="D:\code\pixel_art_generator" />
       <recent name="D:\code\pixel_art_generator\src" />
       <recent name="D:\pixel_art_generator\data\pixel" />
     </key>

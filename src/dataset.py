@@ -44,9 +44,7 @@ class SpriteDataModule(L.LightningDataModule):
 
         self.transform = T.Compose(
             [
-                T.ToPILImage(),
-                T.Resize((config.image_size, config.image_size)),
-                T.ToTensor(),
+                T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
             ]
         )
 
@@ -59,6 +57,7 @@ class SpriteDataModule(L.LightningDataModule):
             logger.info('Loading Sprites')
             assert os.path.exists(filepath), f'{filepath} not found'
             images = np.load(filepath)
+
             images = images.reshape(-1, 3, 16, 16)
             # Constrain between 0 and 1
             images = images / 255.
@@ -67,13 +66,14 @@ class SpriteDataModule(L.LightningDataModule):
             logger.info('Loading Sprite Labels')
             assert os.path.exists(filepath), f'{filepath} not found'
             labels = np.load(filepath)
+
             # Convert one-hot to number
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 2_000
-            batch_size = images.shape[0]
-            indices = torch.randperm(batch_size)[:N]
+            N = 500
+            total_image_count = images.shape[0]
+            indices = torch.randperm(total_image_count)[:N]
             images = images[indices]
             labels = labels[indices]
 
@@ -97,14 +97,16 @@ class SpriteDataModule(L.LightningDataModule):
             assert len(unique_val_labels) == 5, "Validation set does not contain all 5 classes"
 
             self.train_dataset = SpriteDataset(
-                images=torch.tensor(train_images, dtype=torch.float32),
+                images=torch.tensor(train_images, dtype=torch.float),
                 labels=torch.tensor(train_labels, dtype=torch.int32),
+                transform=self.transform,
                 subset="train",
             )
 
             self.val_dataset = SpriteDataset(
-                images=torch.tensor(val_images, dtype=torch.float32),
+                images=torch.tensor(val_images, dtype=torch.float),
                 labels=torch.tensor(val_labels, dtype=torch.int32),
+                transform=self.transform,
                 subset="validate",
             )
 

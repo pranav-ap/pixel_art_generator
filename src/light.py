@@ -21,8 +21,8 @@ class SpriteLightning(pl.LightningModule):
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
 
-        for dir_key in ['output_val_images', 'output_test_images']:
-            make_clear_directory(getattr(config.dirs, dir_key))
+        make_clear_directory(config.dirs.output_val_images)
+        make_clear_directory(config.dirs.output_test_images)
 
     def forward(self, noisy_images, timesteps, labels):
         x = self.model(noisy_images, timesteps, labels)
@@ -30,10 +30,10 @@ class SpriteLightning(pl.LightningModule):
 
     def shared_step(self, batch):
         clean_images, labels = batch
-        clean_images = clean_images * 2 - 1  # mapped to (-1, 1)
 
         noise = torch.randn_like(clean_images, device=self.device)
         batch_size = clean_images.shape[0]
+        # noinspection PyUnresolvedReferences
         timesteps_count = self.noise_scheduler.config.num_train_timesteps - 1
         timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
 
@@ -81,7 +81,7 @@ class SpriteLightning(pl.LightningModule):
         samples = torch.randn(num_member_per_class * num_classes, 3, config.image_size, config.image_size, device=self.device)
         labels = torch.tensor([[i] * num_member_per_class for i in range(num_classes)], dtype=torch.int64).flatten().to(self.device)
 
-        self.noise_scheduler.set_timesteps(num_inference_steps=50, device=self.device)
+        self.noise_scheduler.set_timesteps(num_inference_steps=25, device=self.device)
 
         pred_original_sample = None
 
