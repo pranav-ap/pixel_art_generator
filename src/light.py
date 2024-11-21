@@ -1,13 +1,13 @@
-import lightning.pytorch as pl
 import numpy as np
 import torch
 import torch.nn.functional as F
-from diffusers import DDIMScheduler, DDPMScheduler
+from diffusers import DDIMScheduler
+import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
 from tqdm import tqdm
 
 from config import config
-from utils import make_clear_directory, visualize_X_samples_grid
+from utils import make_clear_directory, visualize_X_samples_grid, logger
 from .model import SpriteModel
 
 torch.set_float32_matmul_precision('medium')
@@ -17,7 +17,7 @@ class SpriteLightning(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.model = SpriteModel()
-        self.noise_scheduler = DDIMScheduler(num_train_timesteps=500)
+        self.noise_scheduler = DDIMScheduler(num_train_timesteps=250)
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
 
@@ -28,18 +28,28 @@ class SpriteLightning(pl.LightningModule):
         x = self.model(noisy_images, timesteps, labels)
         return x
 
-    def shared_step(self, batch):
+    def _prepare_inputs(self, batch):
         clean_images, labels = batch
 
         noise = torch.randn_like(clean_images, device=self.device)
         batch_size = clean_images.shape[0]
         # noinspection PyUnresolvedReferences
-        timesteps_count = self.noise_scheduler.config.num_train_timesteps - 1
+        timesteps_count = self.noise_scheduler.config.num_train_timesteps
         timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
 
         # noinspection PyTypeChecker
         noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
 
+        return noisy_images, timesteps, labels, noise
+
+    @torch.no_grad()
+    def forward_shapes(self, batch):
+        noisy_images, timesteps, labels, noise = self._prepare_inputs(batch)
+        noise_pred = self.model.forward_shapes(noisy_images, timesteps, labels)
+        return noise_pred
+
+    def shared_step(self, batch):
+        noisy_images, timesteps, labels, noise = self._prepare_inputs(batch)
         noise_pred = self.model(noisy_images, timesteps, labels)
         loss = F.mse_loss(noise_pred, noise)
 
@@ -58,32 +68,14 @@ class SpriteLightning(pl.LightningModule):
         return loss
 
     @torch.no_grad()
-    def checkout_forward_pass(self, batch):
-        clean_images, labels = batch
-        clean_images = clean_images * 2 - 1  # mapped to (-1, 1)
-
-        noise = torch.randn_like(clean_images, device=self.device)
-        batch_size = clean_images.shape[0]
-        timesteps_count = self.noise_scheduler.config.num_train_timesteps - 1
-        timesteps = torch.randint(0, timesteps_count, (batch_size,), dtype=torch.int64, device=self.device)
-
-        # noinspection PyTypeChecker
-        noisy_images = self.noise_scheduler.add_noise(clean_images, noise, timesteps)
-
-        noise_pred = self.model(noisy_images, timesteps, labels)
-
-        return noise_pred
-
-    @torch.no_grad()
     def generate(self):
         num_classes = 5
-        num_member_per_class = config.test.batch_size
-        samples = torch.randn(num_member_per_class * num_classes, 3, config.image_size, config.image_size, device=self.device)
+        num_member_per_class = config.val.num_members_per_class
+
+        samples = torch.randn(size=(num_member_per_class * num_classes, 3, config.image_size, config.image_size), device=self.device)
         labels = torch.tensor([[i] * num_member_per_class for i in range(num_classes)], dtype=torch.int64).flatten().to(self.device)
 
-        self.noise_scheduler.set_timesteps(num_inference_steps=25, device=self.device)
-
-        pred_original_sample = None
+        self.noise_scheduler.set_timesteps(num_inference_steps=200, device=self.device)
 
         for i, t in tqdm(enumerate(self.noise_scheduler.timesteps), desc="Generating images from noise"):
             with torch.no_grad():
@@ -91,35 +83,15 @@ class SpriteLightning(pl.LightningModule):
 
             x = self.noise_scheduler.step(noise_pred, t, samples)
             samples = x.prev_sample.to(self.device)
-            pred_original_sample = x.pred_original_sample.to(self.device)
 
-        samples = (samples + 1) / 2
         samples = samples.detach().cpu().clip(-1, 1)
-        filepath = f"{config.dirs.output_test_images}/samples_{self.current_epoch}.npy"
-        np.save(filepath, samples.numpy())
-
-        filepath = f"{config.dirs.output_test_images}/labels_{self.current_epoch}.npy"
-        np.save(filepath, labels.detach().cpu().numpy())
-
-        pred_original_sample = (pred_original_sample + 1) / 2
-        pred_original_sample = pred_original_sample.detach().cpu().clip(-1, 1)
-        filepath = f"{config.dirs.output_test_images}/pred_original_sample_{self.current_epoch}.npy"
-        np.save(filepath, pred_original_sample.numpy())
 
         visualize_X_samples_grid(
             samples,
             labels,
             n_samples=num_member_per_class * num_classes,
             n_cols=num_member_per_class,
-            filepath=f'{config.dirs.output_test_images}/samples_{self.current_epoch}.png'
-        )
-
-        visualize_X_samples_grid(
-            pred_original_sample,
-            labels,
-            n_samples=num_member_per_class * num_classes,
-            n_cols=num_member_per_class,
-            filepath=f'{config.dirs.output_test_images}/pred_original_sample_{self.current_epoch}.png'
+            filepath=f'{config.dirs.output_val_images}/samples_{self.current_epoch}.png'
         )
 
         return samples, labels
@@ -156,12 +128,12 @@ class SpriteLightning(pl.LightningModule):
             monitor='val_loss',
             mode='min',
             dirpath=f'{config.dirs.output}/checkpoints/',
-            filename="best-checkpoint",
+            filename="best_checkpoint",
             save_top_k=1,
             save_last=True,
         )
 
-        progress_bar_callback = TQDMProgressBar(refresh_rate=10)
+        progress_bar_callback = TQDMProgressBar(refresh_rate=5)
         lr_monitor_callback = LearningRateMonitor(logging_interval='epoch')
 
         return [checkpoint_callback, early_stop_callback, progress_bar_callback, lr_monitor_callback]

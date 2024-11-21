@@ -4,25 +4,24 @@ dirs:
   project_root: D:/code/pixel_art_generator
   data: ${dirs.project_root}/data
   output: ${dirs.project_root}/output
-  output_test_images: ${dirs.output}/test_images
   output_val_images: ${dirs.output}/val_images
+  output_test_images: ${dirs.output}/test_images
 
-image_size: 32 # 16 32
+image_size: 16 # 16 32
 
 train:
-  batch_size: 4
+  batch_size: 100
 
   fast_dev_run: False
   overfit_batches: 0
 
-  seed: 42
   patience: 5
-  max_epochs: 50
-  check_val_every_n_epoch: 10
+  max_epochs: 60
+  check_val_every_n_epoch: 6
   num_sanity_val_steps: 0
   log_every_n_steps: 5
   accumulate_grad_batches: 1
   learning_rate: 1e-4
 
-test:
-  batch_size: 2 # per class
+val:
+  num_members_per_class: 2 # per class
