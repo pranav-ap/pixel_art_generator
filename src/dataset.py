@@ -40,16 +40,11 @@ class SpriteDataModule(L.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-        self.num_workers = os.cpu_count()  # 1 3 os.cpu_count()
+        self.num_workers = os.cpu_count()
 
-        self.transform = T.Compose(
-            [
-                T.ToPILImage(),
-                T.Resize((config.image_size, config.image_size)),
-                T.ToTensor(),
-                T.Normalize(mean=[0.5], std=[0.5]),
-            ]
-        )
+        self.transform = T.Compose([
+            T.Normalize(mean=[0.5], std=[0.5]),
+        ])
 
         self.train_dataset: Optional[SpriteDataset] = None
         self.val_dataset: Optional[SpriteDataset] = None
@@ -74,7 +69,7 @@ class SpriteDataModule(L.LightningDataModule):
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 15_000
+            N = 20_000
             total_image_count = images.shape[0]
             indices = torch.randperm(total_image_count)[:N]
             images = images[indices]

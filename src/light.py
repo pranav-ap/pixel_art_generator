@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
 from diffusers import DDIMScheduler
@@ -17,7 +16,7 @@ class SpriteLightning(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.model = SpriteModel()
-        self.noise_scheduler = DDIMScheduler(num_train_timesteps=250)
+        self.noise_scheduler = DDIMScheduler(num_train_timesteps=500)
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
 
@@ -64,7 +63,10 @@ class SpriteLightning(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
-        self.generate()
+
+        if batch_idx == 0:
+            self.generate()
+
         return loss
 
     @torch.no_grad()
@@ -75,7 +77,7 @@ class SpriteLightning(pl.LightningModule):
         samples = torch.randn(size=(num_member_per_class * num_classes, 3, config.image_size, config.image_size), device=self.device)
         labels = torch.tensor([[i] * num_member_per_class for i in range(num_classes)], dtype=torch.int64).flatten().to(self.device)
 
-        self.noise_scheduler.set_timesteps(num_inference_steps=200, device=self.device)
+        self.noise_scheduler.set_timesteps(num_inference_steps=250, device=self.device)
 
         for i, t in tqdm(enumerate(self.noise_scheduler.timesteps), desc="Generating images from noise"):
             with torch.no_grad():

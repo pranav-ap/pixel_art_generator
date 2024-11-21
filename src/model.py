@@ -22,16 +22,14 @@ class SpriteModel(nn.Module):
             in_channels=3 + class_emb_size,
             out_channels=3,
             layers_per_block=3,
-            block_out_channels=(64, 128, 256, 512, 512),
+            block_out_channels=(128, 256, 512, 512),
             down_block_types=(
                 "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
                 "DownBlock2D",
-                "AttnDownBlock2D",
             ),
             up_block_types=(
-                "AttnUpBlock2D",
                 "UpBlock2D",
                 "UpBlock2D",
                 "UpBlock2D",

@@ -17,7 +17,7 @@ def main():
     dm = SpriteDataModule()
     light = SpriteLightning()
 
-    # checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint.ckpt'
+    # checkpoint_path = './output/checkpoints/best_checkpoint.ckpt'
     # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
 
     trainer = pl.Trainer(
@@ -44,12 +44,5 @@ def main():
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
 
 
-def generate():
-    checkpoint_path = 'D:/code/pixel_art_generator/output/checkpoints/best-checkpoint-v1.ckpt'
-    light = SpriteLightning.load_from_checkpoint(checkpoint_path)
-    light.generate()
-
-
 if __name__ == '__main__':
-    # generate()
     main()

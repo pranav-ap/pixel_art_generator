@@ -1,7 +1,7 @@
 log_level: TRACE # TRACE WARNING
 
 dirs:
-  project_root: D:/code/pixel_art_generator
+  project_root: /home/stud/ath/ath_ws/others/pixel_art_generator # D:/code/pixel_art_generator
   data: ${dirs.project_root}/data
   output: ${dirs.project_root}/output
   output_val_images: ${dirs.output}/val_images
@@ -17,11 +17,11 @@ train:
 
   patience: 5
   max_epochs: 60
-  check_val_every_n_epoch: 6
+  check_val_every_n_epoch: 5
   num_sanity_val_steps: 0
   log_every_n_steps: 5
   accumulate_grad_batches: 1
-  learning_rate: 1e-4
+  learning_rate: 1e-3
 
 val:
   num_members_per_class: 2 # per class
