@@ -51,7 +51,7 @@ class SpriteDataModule(L.LightningDataModule):
 
     def setup(self, stage=None):
         if stage == "fit" or stage == "validate":
-            filepath = f'{config.dirs.data}/sprites.npy'
+            filepath = f'{config.paths.roots.data}/sprites.npy'
             logger.info('Loading Sprites')
             assert os.path.exists(filepath), f'{filepath} not found'
             images = np.load(filepath)
@@ -60,7 +60,7 @@ class SpriteDataModule(L.LightningDataModule):
             # Constrain between 0 and 1
             images = images / 255.
 
-            filepath = f'{config.dirs.data}/sprites_labels.npy'
+            filepath = f'{config.paths.roots.data}/sprites_labels.npy'
             logger.info('Loading Sprite Labels')
             assert os.path.exists(filepath), f'{filepath} not found'
             labels = np.load(filepath)
@@ -105,7 +105,7 @@ class SpriteDataModule(L.LightningDataModule):
                 images=torch.tensor(val_images, dtype=torch.float),
                 labels=torch.tensor(val_labels, dtype=torch.int32),
                 transform=self.transform,
-                subset="validate",
+                subset="val",
             )
 
             logger.info(f"Train Dataset       : {len(self.train_dataset)} samples")

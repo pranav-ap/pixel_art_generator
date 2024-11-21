@@ -6,7 +6,7 @@ from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, Mode
 from tqdm import tqdm
 
 from config import config
-from utils import make_clear_directory, visualize_X_samples_grid, logger
+from utils import visualize_X_samples_grid, logger
 from .model import SpriteModel
 
 torch.set_float32_matmul_precision('medium')
@@ -19,9 +19,6 @@ class SpriteLightning(pl.LightningModule):
         self.noise_scheduler = DDIMScheduler(num_train_timesteps=500)
 
         self.save_hyperparameters(ignore=['model', 'noise_scheduler'])
-
-        make_clear_directory(config.dirs.output_val_images)
-        make_clear_directory(config.dirs.output_test_images)
 
     def forward(self, noisy_images, timesteps, labels):
         x = self.model(noisy_images, timesteps, labels)
@@ -65,12 +62,12 @@ class SpriteLightning(pl.LightningModule):
         self.log("val_loss", loss, prog_bar=True, on_epoch=True, on_step=False)
 
         if batch_idx == 0:
-            self.generate()
+            self.generate(stage='val')
 
         return loss
 
     @torch.no_grad()
-    def generate(self):
+    def generate(self, stage='val'):
         num_classes = 5
         num_member_per_class = config.val.num_members_per_class
 
@@ -88,12 +85,14 @@ class SpriteLightning(pl.LightningModule):
 
         samples = samples.detach().cpu().clip(-1, 1)
 
+        folder = config.paths.output.val_images if stage == 'val' else config.paths.output.test_images
+
         visualize_X_samples_grid(
             samples,
             labels,
             n_samples=num_member_per_class * num_classes,
             n_cols=num_member_per_class,
-            filepath=f'{config.dirs.output_val_images}/samples_{self.current_epoch}.png'
+            filepath=f'{folder}/samples_{self.current_epoch}.png'
         )
 
         return samples, labels
@@ -129,7 +128,7 @@ class SpriteLightning(pl.LightningModule):
         checkpoint_callback = ModelCheckpoint(
             monitor='val_loss',
             mode='min',
-            dirpath=f'{config.dirs.output}/checkpoints/',
+            dirpath=config.paths.output.checkpoints,
             filename="best_checkpoint",
             save_top_k=1,
             save_last=True,

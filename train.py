@@ -4,13 +4,13 @@ import torch
 import lightning as L
 import lightning.pytorch as pl
 from src import SpriteLightning, SpriteDataModule
+from utils import make_clear_directory
+
 
 torch.set_float32_matmul_precision('medium')
 
 
-def main():
-    torch.cuda.empty_cache()
-
+def train():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.info(f"Using device: {device}")
 
@@ -21,8 +21,8 @@ def main():
     # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
 
     trainer = pl.Trainer(
-        default_root_dir=config.dirs.output,
-        logger=L.pytorch.loggers.CSVLogger(save_dir=config.dirs.output),
+        default_root_dir=config.paths.roots.output,
+        logger=L.pytorch.loggers.CSVLogger(save_dir=config.paths.output.logs),
         devices='auto',
         accelerator="auto",
         max_epochs=config.train.max_epochs,
@@ -40,8 +40,24 @@ def main():
         datamodule=dm,
     )
 
+    # noinspection PyUnresolvedReferences
     if trainer.checkpoint_callback.best_model_path:
+        # noinspection PyUnresolvedReferences
         logger.info(f"Best model path : {trainer.checkpoint_callback.best_model_path}")
+
+
+def prep_directories():
+    logger.info("Clearing Directories")
+    make_clear_directory(config.paths.output.logs)
+    make_clear_directory(config.paths.output.val_images)
+    make_clear_directory(config.paths.output.test_images)
+
+
+def main():
+    torch.cuda.empty_cache()
+    prep_directories()
+
+    train()
 
 
 if __name__ == '__main__':
