@@ -69,11 +69,11 @@ class SpriteDataModule(L.LightningDataModule):
             labels = labels.argmax(axis=1)
 
             # Choose N samples
-            N = 20_000
-            total_image_count = images.shape[0]
-            indices = torch.randperm(total_image_count)[:N]
-            images = images[indices]
-            labels = labels[indices]
+            # N = 10_000
+            # total_image_count = images.shape[0]
+            # indices = torch.randperm(total_image_count)[:N]
+            # images = images[indices]
+            # labels = labels[indices]
 
             from sklearn.model_selection import StratifiedShuffleSplit
             stratified_split = StratifiedShuffleSplit(n_splits=1, test_size=0.2)

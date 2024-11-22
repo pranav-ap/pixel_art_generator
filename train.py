@@ -17,9 +17,6 @@ def train():
     dm = SpriteDataModule()
     light = SpriteLightning()
 
-    # checkpoint_path = './output/checkpoints/best_checkpoint.ckpt'
-    # light = SpriteLightning.load_from_checkpoint(checkpoint_path)
-
     trainer = pl.Trainer(
         default_root_dir=config.paths.roots.output,
         logger=L.pytorch.loggers.CSVLogger(save_dir=config.paths.output.logs),
@@ -38,6 +35,7 @@ def train():
     trainer.fit(
         light,
         datamodule=dm,
+        # ckpt_path='./output/checkpoints/last-v1.ckpt',
     )
 
     # noinspection PyUnresolvedReferences
